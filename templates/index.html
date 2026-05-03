@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Energy Theft Detection — Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- ═══ HEADER ════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-icon">⚡</div>
+    <div>
+      <h1>Smart Energy Theft Detection</h1>
+      <p>IoT Monitoring System — Manual Input Mode</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-pill"><span class="dot"></span> LIVE</div>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- ═══ DATA FLOW ══════════════════════════════════════════════════════ -->
+<div class="flow-strip">
+  <div class="flow-node" id="fn-device">
+    <span class="fn-icon">📡</span>
+    <span class="fn-label">Smart Meters</span>
+    <span class="fn-sub">Manual Input</span>
+  </div>
+
+  <div class="flow-conn">
+    <div class="flow-track"></div>
+    <span>HTTP POST</span>
+  </div>
+
+  <div class="flow-node" id="fn-server">
+    <span class="fn-icon">🖥️</span>
+    <span class="fn-label">Flask Server</span>
+    <span class="fn-sub">Detection Logic</span>
+  </div>
+
+  <div class="flow-conn">
+    <div class="flow-track"></div>
+    <span>REST API</span>
+  </div>
+
+  <div class="flow-node" id="fn-dash">
+    <span class="fn-icon">📊</span>
+    <span class="fn-label">Dashboard</span>
+    <span class="fn-sub">Live View</span>
+  </div>
+</div>
+
+<!-- ═══ STATS BAR ══════════════════════════════════════════════════════ -->
+<div class="stats-bar">
+  <div class="stat s-total">
+    <div class="stat-val" id="stat-log">0</div>
+    <div class="stat-lbl">Total Readings</div>
+  </div>
+  <div class="stat s-normal">
+    <div class="stat-val" id="stat-normal">0</div>
+    <div class="stat-lbl">Normal</div>
+  </div>
+  <div class="stat s-sus">
+    <div class="stat-val" id="stat-sus">0</div>
+    <div class="stat-lbl">Suspicious</div>
+  </div>
+  <div class="stat s-theft">
+    <div class="stat-val" id="stat-theft">0</div>
+    <div class="stat-lbl">Theft Alerts</div>
+  </div>
+</div>
+
+<!-- ═══ PAGE CONTENT ═══════════════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- Top row: meter cards + sidebar -->
+  <div class="top-row">
+
+    <!-- Meter cards -->
+    <div>
+      <p class="sec-title">Active Meters</p>
+      <div class="meter-grid" id="meter-grid">
+        <div class="empty">Submit a reading using the form → to see meter cards here.</div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- Manual input form -->
+      <div class="panel">
+        <p class="panel-title">Manual Reading Entry</p>
+
+        <div class="form-row">
+          <label>Meter ID</label>
+          <select id="f-meter">
+            <!-- populated from /config -->
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Expected (kWh)</label>
+          <input type="number" id="f-expected" step="0.01" min="0" placeholder="e.g. 5.00"/>
+        </div>
+        <div class="form-row">
+          <label>Actual (kWh)</label>
+          <input type="number" id="f-actual" step="0.01" min="0" placeholder="e.g. 5.40"/>
+        </div>
+
+        <button class="btn-primary" onclick="submitManual()">Submit Reading</button>
+        <button class="btn-danger"  onclick="fillTheftDemo()">⚠ Demo: Trigger Theft</button>
+
+        <div class="form-msg" id="form-msg"></div>
+      </div>
+
+      <!-- Detection info panel -->
+      <div class="panel">
+        <p class="panel-title">Detection Rules</p>
+        <div style="font-size:0.72rem; color:#4a5170; line-height:1.9;">
+          <span style="color:#4ade80">✓ Normal</span> — within
+          <span id="info-sus-pct" style="color:#fbbf24">—</span> of expected<br>
+          <span style="color:#fbbf24">~ Suspicious</span> — between
+          <span id="info-sus-pct2" style="color:#fbbf24">—</span> over<br>
+          <span style="color:#f87171">⚠ Theft</span> — actual &gt;
+          <span id="info-theft" style="color:#f87171">—</span> over expected
+        </div>
+        <div style="margin-top:12px; padding-top:10px; border-top:1px solid #141828;
+                    font-size:0.68rem; color:#2a3050; line-height:1.7;">
+          📌 Data is manually injected to simulate IoT smart meter readings.
+          No automatic simulation is running.
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+  </div><!-- /top-row -->
+
+  <!-- Log table -->
+  <div class="log-section panel" style="margin-bottom:16px">
+    <p class="panel-title">Recent Readings Log</p>
+    <div class="log-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Meter</th>
+            <th>Expected</th>
+            <th>Actual</th>
+            <th>Deviation</th>
+            <th>Risk</th>
+            <th>Status</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="log-body">
+          <tr><td colspan="8" style="text-align:center;color:#2a3050;padding:20px">No data yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Trend chart -->
+  <div class="chart-section panel">
+    <p class="panel-title" id="chart-heading">Meter M1 — Actual vs Expected Trend</p>
+    <canvas id="trend-chart"></canvas>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ═══ TOAST CONTAINER ════════════════════════════════════════════════ -->
+<div id="toast-wrap"></div>
+
+
+<script>
+/* ──────────────────────────────────────────────────────
+   State
+────────────────────────────────────────────────────── */
+let cfg      = null;
+let chart    = null;
+let prevRisk = {};    // meter_id → last known risk level (for toast dedup)
+
+/* ──────────────────────────────────────────────────────
+   Boot
+────────────────────────────────────────────────────── */
+async function init() {
+  cfg = await fetch('/config').then(r => r.json());
+
+  // Update static display info from config
+  document.getElementById('chart-heading').textContent =
+    `Meter ${cfg.chart_meter_id} — Actual vs Expected Trend`;
+  const thieftPct  = Math.round((cfg.theft_threshold  - 1) * 100);
+  const mediumPct  = Math.round((cfg.medium_threshold - 1) * 100);
+  document.getElementById('info-theft').textContent    = `${thieftPct}%`;
+  document.getElementById('info-sus-pct').textContent  = `${mediumPct}%`;
+  document.getElementById('info-sus-pct2').textContent = `${mediumPct}–${thieftPct}%`;
+
+  // Populate meter dropdown
+  const sel = document.getElementById('f-meter');
+  cfg.meters.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = m;
+    sel.appendChild(opt);
+  });
+
+  initChart();
+  startClock();
+  poll();   // one-time load to show any pre-existing data
+}
+
+/* ──────────────────────────────────────────────────────
+   Clock
+────────────────────────────────────────────────────── */
+function startClock() {
+  const el = document.getElementById('clock');
+  function tick() { el.textContent = new Date().toLocaleTimeString(); }
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ──────────────────────────────────────────────────────
+   Poll cycle
+────────────────────────────────────────────────────── */
+async function poll() {
+  try {
+    const [meters, log, stats] = await Promise.all([
+      fetch('/get-data').then(r => r.json()),
+      fetch(`/get-log?limit=15`).then(r => r.json()),
+      fetch('/stats').then(r => r.json()),
+    ]);
+
+    renderCards(meters);
+    renderLog(log);
+    updateStats(stats);
+    flashFlow();
+
+    meters.forEach(m => {
+      if (m.risk === 'HIGH' && prevRisk[m.meter_id] !== 'HIGH') showToast(m);
+      prevRisk[m.meter_id] = m.risk;
+
+      if (m.meter_id === cfg.chart_meter_id) addChartPoint(m.time, m.actual, m.expected);
+    });
+  } catch (e) {
+    // server might not be up yet — silently retry
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   Stats bar
+────────────────────────────────────────────────────── */
+function updateStats(s) {
+  document.getElementById('stat-log').textContent    = s.log_entries;
+  document.getElementById('stat-normal').textContent = s.normal_count;
+  document.getElementById('stat-sus').textContent    = s.suspicious;
+  document.getElementById('stat-theft').textContent  = s.theft_count;
+}
+
+/* ──────────────────────────────────────────────────────
+   Meter cards
+────────────────────────────────────────────────────── */
+function renderCards(meters) {
+  if (!meters.length) return;
+
+  const grid = document.getElementById('meter-grid');
+  grid.innerHTML = '';
+
+  meters.forEach(m => {
+    const devPct   = Math.max(0, (m.actual - m.expected) / m.expected * 100);
+    const barWidth = Math.min(devPct / 70 * 100, 100).toFixed(1);
+    const sign     = m.deviation >= 0 ? '+' : '';
+
+    grid.innerHTML += `
+      <div class="card risk-${m.risk}">
+        <div class="card-top">
+          <span class="meter-id">Meter ${m.meter_id}</span>
+          <span class="badge badge-${m.risk}">${riskLabel(m.risk)}</span>
+        </div>
+        <div class="row"><span>Expected</span><span>${m.expected} kWh</span></div>
+        <div class="row"><span>Actual</span><span>${m.actual} kWh</span></div>
+        <div class="row"><span>Deviation</span><span>${sign}${m.deviation}%</span></div>
+        <div class="dev-bar">
+          <div class="dev-fill ${m.risk}" style="width:${barWidth}%"></div>
+        </div>
+        <div class="alert-msg theft-msg">
+          ⚠ Theft suspected — consumption is ${sign}${m.deviation}% above expected. Possible meter bypass or illegal tap.
+        </div>
+        <div class="alert-msg sus-msg">
+          ℹ Suspicious reading — usage slightly elevated. Monitoring closely.
+        </div>
+        <div class="card-footer">
+          <span class="card-time">Updated ${m.time}</span>
+          <button class="btn-force"
+            onclick="forceTheft('${m.meter_id}', ${m.expected})">
+            Force Theft
+          </button>
+        </div>
+      </div>`;
+  });
+}
+
+function riskLabel(risk) {
+  return { HIGH: '⚠ HIGH RISK', MEDIUM: '~ SUSPICIOUS', LOW: '✓ NORMAL' }[risk] || risk;
+}
+
+/* ──────────────────────────────────────────────────────
+   Log table
+────────────────────────────────────────────────────── */
+function renderLog(log) {
+  if (!log.length) return;
+
+  const body = document.getElementById('log-body');
+  body.innerHTML = log.map(r => `
+    <tr>
+      <td style="font-family:monospace">${r.time}</td>
+      <td style="color:#c8d0e8;font-weight:500">${r.meter_id}</td>
+      <td>${r.expected} kWh</td>
+      <td>${r.actual} kWh</td>
+      <td>${r.deviation >= 0 ? '+' : ''}${r.deviation}%</td>
+      <td class="${r.risk}">${r.risk}</td>
+      <td class="${r.risk}">${r.status}</td>
+      <td class="src">${r.source}</td>
+    </tr>`).join('');
+}
+
+/* ──────────────────────────────────────────────────────
+   Chart
+────────────────────────────────────────────────────── */
+function initChart() {
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Actual',
+          data: [], borderColor: '#f87171',
+          backgroundColor: '#f8717118', borderWidth: 2,
+          pointRadius: 3, tension: 0.35, fill: true,
+        },
+        {
+          label: 'Expected',
+          data: [], borderColor: '#60a5fa',
+          backgroundColor: 'transparent', borderWidth: 2,
+          pointRadius: 3, borderDash: [5, 4], tension: 0.35,
+        },
+      ]
+    },
+    options: {
+      responsive: true, animation: false, maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: '#4a5170', font: { size: 11 } } }
+      },
+      scales: {
+        x: { ticks: { color: '#2a3050', font: { size: 10 } }, grid: { color: '#0e1220' } },
+        y: { ticks: { color: '#2a3050', font: { size: 10 } }, grid: { color: '#0e1220' } },
+      }
+    }
+  });
+}
+
+function addChartPoint(time, actual, expected) {
+  const { labels, datasets } = chart.data;
+  labels.push(time);
+  datasets[0].data.push(actual);
+  datasets[1].data.push(expected);
+  if (labels.length > cfg.chart_max_points) {
+    labels.shift();
+    datasets[0].data.shift();
+    datasets[1].data.shift();
+  }
+  chart.update();
+}
+
+/* ──────────────────────────────────────────────────────
+   Data flow flash
+────────────────────────────────────────────────────── */
+function flashFlow() {
+  ['fn-device', 'fn-server', 'fn-dash'].forEach((id, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 600);
+    }, i * 200);
+  });
+}
+
+/* ──────────────────────────────────────────────────────
+   Toast alert
+────────────────────────────────────────────────────── */
+function showToast(meter) {
+  const wrap = document.getElementById('toast-wrap');
+  const div  = document.createElement('div');
+  div.className = 'toast';
+  div.innerHTML = `
+    <div class="toast-head">
+      <span class="toast-title">⚠ Theft Alert — Meter ${meter.meter_id}</span>
+      <button class="toast-x" onclick="this.closest('.toast').remove()">✕</button>
+    </div>
+    <div class="toast-body">
+      Actual: <strong>${meter.actual} kWh</strong> &nbsp;|&nbsp; Expected: ${meter.expected} kWh<br>
+      Deviation: <strong>+${meter.deviation}%</strong> above threshold
+    </div>`;
+  wrap.appendChild(div);
+  setTimeout(() => div.remove(), 6000);
+}
+
+/* ──────────────────────────────────────────────────────
+   Manual form
+────────────────────────────────────────────────────── */
+async function submitManual() {
+  const meter_id = document.getElementById('f-meter').value.trim();
+  const expected = parseFloat(document.getElementById('f-expected').value);
+  const actual   = parseFloat(document.getElementById('f-actual').value);
+  const msg      = document.getElementById('form-msg');
+
+  if (!meter_id || isNaN(expected) || isNaN(actual)) {
+    showMsg('Fill in all fields correctly.', 'err'); return;
+  }
+  if (expected <= 0 || actual < 0) {
+    showMsg('Values must be positive numbers.', 'err'); return;
+  }
+
+  try {
+    const res  = await fetch('/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ meter_id, expected, actual, source: 'manual' }),
+    });
+    const data = await res.json();
+    showMsg(`✓ Submitted — ${data.risk} (${data.status}), deviation ${data.deviation}%`, 'ok');
+    poll(); // immediate refresh
+  } catch {
+    showMsg('Server error — is server.py running?', 'err');
+  }
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('form-msg');
+  el.textContent = text;
+  el.className   = `form-msg ${type}`;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+function fillTheftDemo() {
+  const sel      = document.getElementById('f-meter');
+  const expected = 5.00;
+  const actual   = +(expected * 1.6).toFixed(2);  // 60% over — definitely HIGH
+  document.getElementById('f-expected').value = expected;
+  document.getElementById('f-actual').value   = actual;
+  showMsg(`Demo values loaded — click Submit to send.`, 'ok');
+}
+
+async function forceTheft(meterId, currentExpected) {
+  const actual = +(currentExpected * 1.6).toFixed(2);
+  await fetch('/data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      meter_id: meterId,
+      expected: currentExpected,
+      actual,
+      source: 'manual',
+    }),
+  });
+  poll();
+}
+
+/* ──────────────────────────────────────────────────────
+   Start
+────────────────────────────────────────────────────── */
+init();
+</script>
+
+</body>
+</html>

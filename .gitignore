@@ -9,3 +9,8 @@ env/
 dist/
 .DS_Store
 .claude/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+predictions.csv

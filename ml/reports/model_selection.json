@@ -1,0 +1,132 @@
+{
+  "feature_spec": {
+    "cooling_base_c": 24.0,
+    "heating_base_c": 2.5
+  },
+  "knee_search_dev_cv_rmse": 8.963,
+  "n_splits": 5,
+  "holdout_fraction": 0.2,
+  "candidates": {
+    "baseline_linear_raw_weather": {
+      "cv_folds": [
+        38.533,
+        44.945,
+        42.869,
+        49.422,
+        54.18
+      ],
+      "cv_mean": 45.99,
+      "holdout_rmse": 54.192,
+      "extrapolates": true
+    },
+    "lightgbm_raw_weather_hour": {
+      "cv_folds": [
+        9.219,
+        9.142,
+        16.108,
+        17.55,
+        17.613
+      ],
+      "cv_mean": 13.926,
+      "holdout_rmse": 14.505,
+      "extrapolates": false
+    },
+    "linear_hour_cdd_hdd": {
+      "cv_folds": [
+        8.722,
+        8.497,
+        9.56,
+        8.507,
+        8.267
+      ],
+      "cv_mean": 8.711,
+      "holdout_rmse": 8.302,
+      "extrapolates": true
+    },
+    "ridge_hour_cdd_hdd": {
+      "cv_folds": [
+        8.724,
+        8.497,
+        9.561,
+        8.506,
+        8.266
+      ],
+      "cv_mean": 8.711,
+      "holdout_rmse": 8.301,
+      "extrapolates": true
+    },
+    "elasticnet_hour_cdd_hdd": {
+      "cv_folds": [
+        8.747,
+        8.497,
+        9.708,
+        8.488,
+        8.263
+      ],
+      "cv_mean": 8.741,
+      "holdout_rmse": 8.281,
+      "extrapolates": true
+    },
+    "lightgbm_hour_cdd_hdd": {
+      "cv_folds": [
+        10.216,
+        11.658,
+        18.817,
+        17.93,
+        22.328
+      ],
+      "cv_mean": 16.19,
+      "holdout_rmse": 24.968,
+      "extrapolates": false
+    },
+    "hybrid_linear_plus_gbm_residual": {
+      "cv_folds": [
+        8.884,
+        8.631,
+        9.754,
+        8.72,
+        8.459
+      ],
+      "cv_mean": 8.889,
+      "holdout_rmse": 8.396,
+      "extrapolates": true
+    }
+  },
+  "optional_terms_cv_mean": {
+    "cdd_x_daytime": 8.891,
+    "cdd_squared": 10.018,
+    "is_weekend": 8.723
+  },
+  "selected": "linear_hour_cdd_hdd",
+  "selected_in_sample_rmse": 8.488,
+  "selected_coefficients": {
+    "intercept": 88.182,
+    "h_01": 1.099,
+    "h_02": 1.9684,
+    "h_03": 1.1201,
+    "h_04": 0.7053,
+    "h_05": 0.8304,
+    "h_06": 43.6579,
+    "h_07": 83.4254,
+    "h_08": 84.4725,
+    "h_09": 85.3692,
+    "h_10": 55.2737,
+    "h_11": 54.4028,
+    "h_12": 53.6174,
+    "h_13": 54.5377,
+    "h_14": 54.738,
+    "h_15": 54.0934,
+    "h_16": 55.3263,
+    "h_17": 54.6119,
+    "h_18": 108.4938,
+    "h_19": 109.6395,
+    "h_20": 109.659,
+    "h_21": 108.9146,
+    "h_22": 108.2343,
+    "h_23": 20.8868,
+    "cdd": 8.6032,
+    "hdd": -1.6526,
+    "humidity_pct": 0.0124,
+    "solar_irradiance_wm2": 0.0012
+  }
+}

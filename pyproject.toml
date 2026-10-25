@@ -1,0 +1,31 @@
+[project]
+name = "gridcast"
+version = "0.1.0"
+description = "Microgrid demand forecasting and grid-transition controller on Zoho Catalyst."
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["backend", ".", "ml"]
+testpaths = ["backend/tests", "tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["test_eval.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "predict", "train", "local_endpoint"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = ["backend", "ml", "."]
+explicit_package_bases = true
+exclude = ["^test_eval\\.py$"]
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "lightgbm.*", "matplotlib.*"]
+ignore_missing_imports = true

@@ -12,7 +12,7 @@ python ml/eda.py       # figures -> docs/figures/
 
 - 4,000 hourly rows, 2014-12-31 23:00 to 2015-06-16 14:00, no gaps, no missing values.
   `sample_test_input.csv` continues the series from 2015-06-16 15:00 to 2015-07-28 06:00
-  (mean 29.2 °C, versus 17.0 °C in training), so the model must extrapolate into hotter weather.
+  (mean 29.2 °C, versus 18.5 °C in training), so the model must extrapolate into hotter weather.
 - Demand is set mainly by hour of day, as a step profile: about 92 kW at 00–05, a ramp at 06–07,
   160–185 kW through the day, 205–220 kW at 18–22, and a drop at 23 (`docs/figures/hourly_profile.png`).
 - Cooling load is the only material weather effect. Above the knee demand rises by 8.6 kW per °C,

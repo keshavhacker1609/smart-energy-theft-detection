@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            ml/requirements.txt
+            backend/requirements.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check backend ml tests predict.py
+      - run: ruff format --check backend ml tests predict.py
+      - run: mypy backend ml tests predict.py
+      - run: pytest --cov=app --cov-branch --cov-report=term-missing
+      - name: predict.py contract against the local reference endpoint
+        env:
+          QUICKML_ENDPOINT_URL: http://127.0.0.1:8765/predict
+          QUICKML_ENDPOINT_KEY: local
+          QUICKML_ACCESS_TOKEN: local
+        run: |
+          python ml/local_endpoint.py --port 8765 &
+          sleep 3
+          python test_eval.py | tee eval.log
+          grep -q SUCCESS eval.log
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build

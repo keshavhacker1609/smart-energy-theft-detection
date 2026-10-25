@@ -1,0 +1,23 @@
+flowchart TB
+  subgraph Client
+    UI["Slate: React console<br/>Dashboard · Ingest · What-if · Model · History"]
+  end
+  subgraph AppSail["AppSail: FastAPI"]
+    API["/api routes"]
+    CLEAN["cleaning.py<br/>schema, repair, quality report"]
+    FEAT["features.py<br/>hour one-hot, CDD/HDD"]
+    CTRL["controller.py<br/>spec rules + reasons"]
+    BATT["battery.py<br/>SoC simulation"]
+  end
+  QML["QuickML endpoint<br/>linear regression"]
+  STR[("Stratus<br/>raw CSV, run JSON")]
+  DS[("Data Store<br/>ForecastRuns, ForecastHours")]
+  PRED["predict.py<br/>evaluation harness"]
+
+  UI -- "CSV / rows / what-if" --> API
+  API --> CLEAN --> FEAT
+  FEAT -- "one row per request" --> QML
+  QML -- "kW" --> CTRL --> BATT
+  API --> STR
+  API --> DS
+  PRED -- "same features.py and client" --> QML

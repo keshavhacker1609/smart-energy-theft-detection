@@ -19,14 +19,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.figure import Figure
-from sklearn.linear_model import LinearRegression
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 sys.path.insert(0, str(ROOT / "ml"))
 
-from app.features import TARGET, TEMPERATURE, TIMESTAMP, FeatureSpec, build_features  # noqa: E402
-from train import HOLDOUT_FRACTION, REPORT_PATH, load_training_data, rmse  # noqa: E402
+from app.features import TARGET, TEMPERATURE, TIMESTAMP, FeatureSpec
+from model_card import holdout_predictions
+from model_card import hourly_profile as hourly_profile_table
+from train import REPORT_PATH, load_training_data, rmse
 
 FIGURES = ROOT / "docs" / "figures"
 
@@ -71,9 +72,8 @@ def _save(fig: Figure, name: str) -> None:
 
 
 def hourly_profile(df: pd.DataFrame) -> None:
-    hour = df[TIMESTAMP].dt.hour
-    grouped = df.groupby(hour)[TARGET]
-    mean, q25, q75 = grouped.mean(), grouped.quantile(0.25), grouped.quantile(0.75)
+    table = hourly_profile_table(df).set_index("hour")
+    mean, q25, q75 = table["mean_kw"], table["q25_kw"], table["q75_kw"]
 
     fig, ax = plt.subplots(figsize=(8, 3.6))
     ax.axvspan(17.5, 22.5, color=PEAK_BAND, zorder=0)
@@ -123,10 +123,7 @@ def cooling_knee(df: pd.DataFrame, spec: FeatureSpec) -> None:
 
 
 def holdout_diagnostics(df: pd.DataFrame, spec: FeatureSpec) -> None:
-    split = int(len(df) * (1 - HOLDOUT_FRACTION))
-    development, holdout = df.iloc[:split], df.iloc[split:]
-    model = LinearRegression().fit(build_features(development, spec), development[TARGET])
-    predicted = model.predict(build_features(holdout, spec))
+    holdout, predicted = holdout_predictions(df, spec)
     actual = holdout[TARGET].to_numpy()
     residual = actual - predicted
     score = rmse(actual, predicted)

@@ -16,8 +16,12 @@ extend-exclude = ["test_eval.py"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+"ml/*.py" = ["E402"]
+"predict.py" = ["E402"]
+
 [tool.ruff.lint.isort]
-known-first-party = ["app", "predict", "train", "local_endpoint"]
+known-first-party = ["app", "predict", "train", "local_endpoint", "model_card"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -25,7 +29,8 @@ strict = true
 mypy_path = ["backend", "ml", "."]
 explicit_package_bases = true
 exclude = ["^test_eval\\.py$"]
+plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "lightgbm.*", "matplotlib.*"]
+module = ["sklearn.*", "lightgbm.*", "matplotlib.*", "zcatalyst_sdk.*"]
 ignore_missing_imports = true

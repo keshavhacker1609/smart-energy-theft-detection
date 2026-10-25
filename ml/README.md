@@ -4,8 +4,9 @@ Everything here is reproducible from `ml/data/train_telemetry.csv`:
 
 ```bash
 pip install -r requirements-dev.txt
-python ml/train.py     # knee search, model comparison, writes feature spec + QuickML exports
-python ml/eda.py       # figures -> docs/figures/
+python ml/train.py       # knee search, model comparison, writes feature spec + QuickML exports
+python ml/model_card.py  # model card served by GET /api/model
+python ml/eda.py         # figures -> docs/figures/
 ```
 
 ## Findings
@@ -67,7 +68,7 @@ extrapolate in temperature, with ties within 1% going to the simplest. Ridge and
    To get a strictly out-of-sample holdout figure, train once on `ml/quickml_train_dev.csv` first.
 2. Build a regression pipeline with target `target_demand_kw` and the Linear Regression algorithm.
    Do not let QuickML add its own scaling or encoding of the one-hot columns.
-3. Publish the endpoint. Copy its URL, auth and headers into `.env` (see `.env.example`).
+3. Publish the endpoint and fill in `.env` (see `.env.example` and `docs/deployment.md`).
 4. `python ml/holdout_check.py` scores the live endpoint on the last 20% of training data.
 
 QuickML leaderboard result: _not yet recorded_.
@@ -80,5 +81,6 @@ credentials. It is never deployed:
 
 ```bash
 python ml/local_endpoint.py --port 8765 &
-QUICKML_ENDPOINT_URL=http://127.0.0.1:8765/predict python test_eval.py
+QUICKML_ENDPOINT_URL=http://127.0.0.1:8765/predict QUICKML_ENDPOINT_KEY=local \
+  QUICKML_ACCESS_TOKEN=local python test_eval.py
 ```

@@ -19,9 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "ml"))
 
-from app.features import INPUT_COLUMNS, TARGET  # noqa: E402
-from predict import predict  # noqa: E402
-from train import HOLDOUT_FRACTION, load_training_data, rmse  # noqa: E402
+from app.features import INPUT_COLUMNS, TARGET
+from predict import predict
+from train import HOLDOUT_FRACTION, load_training_data, rmse
 
 
 def main() -> None:

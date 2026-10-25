@@ -14,3 +14,4 @@ dist/
 .mypy_cache/
 .ruff_cache/
 predictions.csv
+backend/.data/

@@ -6,7 +6,9 @@ test_eval.py and the backend can be exercised without Catalyst credentials.
 It is never deployed.
 
 Usage: python ml/local_endpoint.py --port 8765
-       QUICKML_ENDPOINT_URL=http://127.0.0.1:8765/predict python test_eval.py
+       export QUICKML_ENDPOINT_URL=http://127.0.0.1:8765/predict
+       export QUICKML_ENDPOINT_KEY=local QUICKML_ACCESS_TOKEN=local
+       python test_eval.py
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ from sklearn.linear_model import LinearRegression
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app.features import TARGET, feature_names  # noqa: E402
+from app.features import TARGET, feature_names
 
 EXPORT_PATH = ROOT / "ml" / "quickml_train.csv"
 
@@ -41,13 +43,13 @@ def make_handler(model: LinearRegression) -> type[BaseHTTPRequestHandler]:
         def do_POST(self) -> None:
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                rows = json.loads(self.rfile.read(length))["data"]
-                frame = pd.DataFrame(rows)
-                missing = [c for c in columns if c not in frame.columns]
+                row = json.loads(self.rfile.read(length))["data"]
+                missing = [c for c in columns if c not in row]
                 if missing:
                     raise ValueError(f"missing features: {missing}")
-                predictions = np.asarray(model.predict(frame[columns]), dtype=float)
-                self._reply(200, {"predictions": predictions.round(4).tolist()})
+                frame = pd.DataFrame([row])[columns]
+                prediction = float(np.asarray(model.predict(frame), dtype=float)[0])
+                self._reply(200, {"prediction": round(prediction, 4)})
             except (KeyError, ValueError, TypeError) as exc:
                 self._reply(400, {"error": str(exc)})
 

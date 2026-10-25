@@ -27,7 +27,8 @@ def endpoint_url() -> Iterator[str]:
 @pytest.fixture
 def configured(endpoint_url: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("QUICKML_ENDPOINT_URL", endpoint_url)
-    monkeypatch.setenv("QUICKML_BATCH_SIZE", "64")
+    monkeypatch.setenv("QUICKML_ENDPOINT_KEY", "local")
+    monkeypatch.setenv("QUICKML_ACCESS_TOKEN", "local")
 
 
 @pytest.mark.usefixtures("configured")

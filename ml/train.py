@@ -28,7 +28,7 @@ from sklearn.preprocessing import StandardScaler
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app.features import (  # noqa: E402
+from app.features import (
     DEFAULT_SPEC_PATH,
     HUMIDITY,
     IRRADIANCE,

@@ -5,8 +5,8 @@ in input order. Features are built by the same module the backend and the
 training export use (backend/app/features.py).
 
 Configuration is read from the environment, or from a .env file next to this
-script: QUICKML_ENDPOINT_URL (required), QUICKML_API_KEY, QUICKML_AUTH_SCHEME,
-QUICKML_EXTRA_HEADERS, QUICKML_BATCH_SIZE, QUICKML_TIMEOUT_S.
+script; see .env.example (QUICKML_ENDPOINT_URL, QUICKML_ENDPOINT_KEY and either
+the ZOHO_* refresh-token credentials or QUICKML_ACCESS_TOKEN).
 
 Usage: python predict.py --input sample_test_input.csv --output predictions.csv
 """
@@ -24,8 +24,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "backend"))
 
-from app.features import TARGET, TIMESTAMP, build_features  # noqa: E402
-from app.quickml_client import QuickMLClient, QuickMLSettings  # noqa: E402
+from app.features import TARGET, TIMESTAMP, build_features
+from app.quickml_client import QuickMLClient, QuickMLSettings
 
 
 def _load_dotenv(path: Path) -> None:

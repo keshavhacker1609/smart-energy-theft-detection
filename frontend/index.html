@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0e12" />
+    <meta
+      name="description"
+      content="Microgrid demand forecast, grid transition signals and battery dispatch."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>GridCast Console</title>
+    <script>
+      try {
+        const stored = localStorage.getItem("gridcast-theme");
+        if (stored === "light") document.documentElement.classList.remove("dark");
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

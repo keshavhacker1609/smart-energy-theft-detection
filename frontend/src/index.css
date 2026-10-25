@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --raised: #f0f2f5;
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.18);
+  --fg: #0b0f14;
+  --fg-muted: #4a5361;
+  --fg-subtle: #6b7380;
+  --grid: #2a78d6;
+  --grid-soft: rgba(42, 120, 214, 0.12);
+  --storage: #008300;
+  --storage-soft: rgba(0, 131, 0, 0.11);
+  --overload: #d03b3b;
+  --overload-soft: rgba(208, 59, 59, 0.1);
+  --warning: #8f5f00;
+  --warning-fill: #fab219;
+  --warning-soft: rgba(250, 178, 25, 0.16);
+  --accent: #2a78d6;
+  --chart-grid: #e4e6ea;
+  --chart-axis: #c3c7ce;
+  --peak: rgba(15, 23, 42, 0.05);
+  --focus: #2a78d6;
+}
+
+.dark {
+  --bg: #0b0e12;
+  --surface: #11151b;
+  --raised: #171c23;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --fg: #eef1f5;
+  --fg-muted: #a9b1bd;
+  --fg-subtle: #8a93a0;
+  --grid: #3987e5;
+  --grid-soft: rgba(57, 135, 229, 0.1);
+  --storage: #0ca30c;
+  --storage-soft: rgba(12, 163, 12, 0.08);
+  --overload: #e5484d;
+  --overload-soft: rgba(229, 72, 77, 0.14);
+  --warning: #fab219;
+  --warning-fill: #fab219;
+  --warning-soft: rgba(250, 178, 25, 0.12);
+  --accent: #3987e5;
+  --chart-grid: #1f252e;
+  --chart-axis: #343c48;
+  --peak: rgba(255, 255, 255, 0.04);
+  --focus: #5598e7;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-grid: var(--grid);
+  --color-grid-soft: var(--grid-soft);
+  --color-storage: var(--storage);
+  --color-storage-soft: var(--storage-soft);
+  --color-overload: var(--overload);
+  --color-overload-soft: var(--overload-soft);
+  --color-warning: var(--warning);
+  --color-warning-fill: var(--warning-fill);
+  --color-warning-soft: var(--warning-soft);
+  --color-accent: var(--accent);
+  --color-focus: var(--focus);
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-bg text-fg font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  * {
+    @apply border-border;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

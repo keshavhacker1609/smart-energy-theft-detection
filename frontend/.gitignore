@@ -1,0 +1,4 @@
+node_modules/
+dist/
+public/sample_test_input.csv
+.env.local

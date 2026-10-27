@@ -8,6 +8,7 @@ Wire format, as implemented by zcatalyst_sdk.quick_ml.QuickML.predict:
     CATALYST-ORG: <org id>                      (optional)
     Environment: Development | Production
     {"data": {"<feature>": <value>, ...}}       one row per request
+    -> {"result": [<prediction>]}
 
 Access tokens are minted from a Zoho self-client refresh token and renewed on
 expiry, so predict.py keeps working beyond the one-hour token lifetime. Rows

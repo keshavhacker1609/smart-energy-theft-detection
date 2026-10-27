@@ -78,6 +78,7 @@ def test_encode_row_rejects_non_finite() -> None:
 @pytest.mark.parametrize(
     "body",
     [
+        {"result": [123.4]},
         123.4,
         "123.4",
         {"prediction": 123.4},

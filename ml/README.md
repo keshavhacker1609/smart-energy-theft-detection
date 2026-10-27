@@ -71,7 +71,7 @@ extrapolate in temperature, with ties within 1% going to the simplest. Ridge and
 3. Publish the endpoint and fill in `.env` (see `.env.example` and `docs/deployment.md`).
 4. `python ml/holdout_check.py` scores the live endpoint on the last 20% of training data.
 
-QuickML leaderboard result: _not yet recorded_.
+QuickML result (Linear Regression, QuickML's evaluation split): RMSE 8.42 kW, MAE 6.70 kW, MAPE 4.79%, R² 0.971.
 
 ## Local reference endpoint
 

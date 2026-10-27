@@ -47,7 +47,7 @@ console's Model page.
 | Ridge, same features | 8.71 | 8.30 |
 | Linear + LightGBM on residuals | 8.89 | 8.40 |
 
-QuickML leaderboard: _to be recorded after training in Catalyst._ Live holdout figure from
+QuickML (Linear Regression on `ml/quickml_train.csv`, QuickML's own evaluation split): **RMSE 8.42 kW, MAE 6.70 kW, R² 0.971**. Live holdout figure from
 `python ml/holdout_check.py`: _to be recorded against the published endpoint._ Against the local reference
 endpoint it gives 8.25 kW.
 

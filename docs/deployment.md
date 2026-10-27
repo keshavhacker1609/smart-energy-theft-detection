@@ -20,8 +20,9 @@
 6. Run `python ml/holdout_check.py` and `python test_eval.py`.
 
 The client sends one row per request as `{"data": {...features}}`, with the headers
-`Authorization: Zoho-oauthtoken <token>` and `X-QUICKML-ENDPOINT-KEY`. This is the same request
-`zcatalyst_sdk`'s `QuickML.predict` builds. Rows are sent concurrently (`QUICKML_MAX_WORKERS`).
+`Authorization: Zoho-oauthtoken <token>`, `X-QUICKML-ENDPOINT-KEY`, `CATALYST-ORG` and
+`Environment`, matching the "Required Headers" on the endpoint page (OAuth scope
+`QuickML.deployment.READ`). Rows are sent concurrently (`QUICKML_MAX_WORKERS`).
 
 ## 2. Data Store
 

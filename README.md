@@ -162,7 +162,8 @@ Deployment steps for QuickML, Data Store tables, Stratus, AppSail and Slate are 
 | `QUICKML_ENDPOINT_KEY` | predict.py, API | Sent as `X-QUICKML-ENDPOINT-KEY` |
 | `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_ACCOUNTS_URL` | predict.py, API | Self-client refresh token; access tokens are minted and renewed automatically |
 | `QUICKML_ACCESS_TOKEN` | predict.py, API | Alternative to the refresh-token variables (expires after one hour) |
-| `CATALYST_ORG_ID` | predict.py, API | Optional `CATALYST-ORG` header |
+| `CATALYST_ORG_ID` | predict.py, API | `CATALYST-ORG` header (shown on the endpoint page) |
+| `CATALYST_ENVIRONMENT` | predict.py, API | `Environment` header: `Development` (default) or `Production` |
 | `QUICKML_MAX_WORKERS`, `QUICKML_TIMEOUT_S`, `QUICKML_MAX_RETRIES` | predict.py, API | Concurrency, timeout and retries |
 | `STORAGE_BACKEND` | API | `catalyst` in production, `local` (SQLite) in development |
 | `STRATUS_BUCKET`, `DATASTORE_RUNS_TABLE`, `DATASTORE_HOURS_TABLE` | API | Catalyst resource names |

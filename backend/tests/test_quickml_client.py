@@ -114,6 +114,7 @@ def test_predict_sends_one_row_per_request_in_order() -> None:
     headers = calls[0]["headers"]
     assert headers["Authorization"] == "Zoho-oauthtoken static-token"
     assert headers["X-QUICKML-ENDPOINT-KEY"] == "ek"
+    assert headers["Environment"] == "Development"
     assert "CATALYST-ORG" not in headers
 
 
@@ -216,11 +217,13 @@ def test_settings_from_env() -> None:
             "ZOHO_REFRESH_TOKEN": "refresh",
             "ZOHO_ACCOUNTS_URL": "https://accounts.zoho.in",
             "CATALYST_ORG_ID": "777",
+            "CATALYST_ENVIRONMENT": "Production",
             "QUICKML_MAX_WORKERS": "4",
         }
     )
     assert settings.oauth == OAuthCredentials("cid", "secret", "refresh", "https://accounts.zoho.in")
     assert settings.org_id == "777" and settings.max_workers == 4
+    assert settings.environment == "Production"
 
 
 @pytest.mark.parametrize(

@@ -6,6 +6,7 @@ Wire format, as implemented by zcatalyst_sdk.quick_ml.QuickML.predict:
     Authorization: Zoho-oauthtoken <access token>
     X-QUICKML-ENDPOINT-KEY: <endpoint key>
     CATALYST-ORG: <org id>                      (optional)
+    Environment: Development | Production
     {"data": {"<feature>": <value>, ...}}       one row per request
 
 Access tokens are minted from a Zoho self-client refresh token and renewed on
@@ -55,6 +56,7 @@ class QuickMLSettings:
     access_token: str | None = None
     oauth: OAuthCredentials | None = None
     org_id: str | None = None
+    environment: str = "Development"
     timeout_s: float = 15.0
     max_retries: int = 3
     backoff_s: float = 0.5
@@ -96,6 +98,7 @@ class QuickMLSettings:
             access_token=access_token,
             oauth=oauth,
             org_id=get("CATALYST_ORG_ID") or None,
+            environment=get("CATALYST_ENVIRONMENT") or cls.environment,
             timeout_s=float(get("QUICKML_TIMEOUT_S") or cls.timeout_s),
             max_retries=int(get("QUICKML_MAX_RETRIES") or cls.max_retries),
             backoff_s=float(get("QUICKML_BACKOFF_S") or cls.backoff_s),
@@ -223,6 +226,7 @@ class QuickMLClient:
             "Accept": "application/json",
             "Authorization": f"Zoho-oauthtoken {self._tokens.get()}",
             "X-QUICKML-ENDPOINT-KEY": self.settings.endpoint_key,
+            "Environment": self.settings.environment,
         }
         if self.settings.org_id:
             headers["CATALYST-ORG"] = self.settings.org_id

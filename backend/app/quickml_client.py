@@ -10,6 +10,10 @@ Wire format, as implemented by zcatalyst_sdk.quick_ml.QuickML.predict:
     {"data": {"<feature>": <value>, ...}}       one row per request
     -> {"result": [<prediction>]}
 
+QUICKML_BATCH_SIZE > 1 sends {"data": [row, ...]} instead and expects one
+prediction per row back; use it only if the endpoint accepts lists, since
+each request counts against the Catalyst prediction quota.
+
 Access tokens are minted from a Zoho self-client refresh token and renewed on
 expiry, so predict.py keeps working beyond the one-hour token lifetime. Rows
 are sent concurrently because the endpoint scores a single row per call.
@@ -62,6 +66,7 @@ class QuickMLSettings:
     max_retries: int = 3
     backoff_s: float = 0.5
     max_workers: int = 16
+    batch_size: int = 1
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> QuickMLSettings:
@@ -104,6 +109,7 @@ class QuickMLSettings:
             max_retries=int(get("QUICKML_MAX_RETRIES") or cls.max_retries),
             backoff_s=float(get("QUICKML_BACKOFF_S") or cls.backoff_s),
             max_workers=int(get("QUICKML_MAX_WORKERS") or cls.max_workers),
+            batch_size=max(1, int(get("QUICKML_BATCH_SIZE") or cls.batch_size)),
         )
 
 
@@ -165,6 +171,25 @@ def encode_row(row: Mapping[str, Any]) -> dict[str, Any]:
     return {"data": {str(column): _json_number(value) for column, value in row.items()}}
 
 
+def encode_batch(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    return {"data": [encode_row(row)["data"] for row in rows]}
+
+
+def decode_batch(body: Any, expected: int) -> list[float]:
+    """Extract one prediction per row from a batched response."""
+    values = body
+    while isinstance(values, Mapping):
+        key = next((k for k in PREDICTION_KEYS if k in values), None)
+        if key is None:
+            raise QuickMLError(f"response has no prediction field; keys: {sorted(values)}")
+        values = values[key]
+    if not isinstance(values, Sequence) or isinstance(values, (str, bytes)):
+        raise QuickMLError(f"predictions must be a list, got {type(values).__name__}")
+    if len(values) != expected:
+        raise QuickMLError(f"expected {expected} predictions, got {len(values)}")
+    return [decode_prediction(value) for value in values]
+
+
 def decode_prediction(body: Any) -> float:
     """Extract the single prediction from an endpoint response."""
     value = body
@@ -210,16 +235,33 @@ class QuickMLClient:
         self._tokens = TokenSource(settings, self._session)
 
     def predict(self, features: pd.DataFrame) -> np.ndarray:
-        """One prediction per feature row, in row order."""
+        """One prediction per feature row, in row order.
+
+        Stops issuing requests after the first failure so a quota or auth
+        error does not consume the rest of the prediction allowance.
+        """
         rows = features.to_dict(orient="records")
         if not rows:
             return np.empty(0, dtype=float)
-        workers = max(1, min(self.settings.max_workers, len(rows)))
-        with ThreadPoolExecutor(max_workers=workers) as pool:
-            return np.fromiter(pool.map(self.predict_row, rows), dtype=float, count=len(rows))
+        size = self.settings.batch_size
+        chunks = [rows[start : start + size] for start in range(0, len(rows), size)]
+        failed = threading.Event()
 
-    def predict_row(self, row: Mapping[str, Any]) -> float:
-        return decode_prediction(self._post(encode_row(row)))
+        def run(chunk: list[dict[str, Any]]) -> list[float]:
+            if failed.is_set():
+                raise QuickMLError("cancelled after an earlier request failed")
+            try:
+                if size == 1:
+                    return [decode_prediction(self._post(encode_row(chunk[0])))]
+                return decode_batch(self._post(encode_batch(chunk)), expected=len(chunk))
+            except QuickMLError:
+                failed.set()
+                raise
+
+        workers = max(1, min(self.settings.max_workers, len(chunks)))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            results = list(pool.map(run, chunks))
+        return np.array([value for chunk in results for value in chunk], dtype=float)
 
     def _headers(self) -> dict[str, str]:
         headers = {

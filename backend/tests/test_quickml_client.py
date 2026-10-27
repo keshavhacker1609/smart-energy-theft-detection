@@ -239,3 +239,40 @@ def test_settings_from_env() -> None:
 def test_settings_from_env_rejects_incomplete_config(env: dict[str, str], message: str) -> None:
     with pytest.raises(QuickMLError, match=message):
         QuickMLSettings.from_env(env)
+
+
+def test_quota_error_stops_remaining_requests() -> None:
+    quota = _response(403, '{"code":"PREDICTION_USAGE_LIMIT_EXCEEDED"}')
+    session = FakeSession([quota] + [_response(200, {"result": [1.0]})] * 49)
+    features = pd.DataFrame({"cdd": np.arange(50, dtype=float)})
+    with pytest.raises(QuickMLError, match="HTTP 403"):
+        _client(session).predict(features)
+    assert len(session.model_calls()) == 1
+
+
+def test_batch_mode_sends_lists_and_preserves_order() -> None:
+    session = FakeSession([_response(200, {"result": [10, 20]}), _response(200, {"result": [30]})])
+    np.testing.assert_allclose(_client(session, batch_size=2).predict(FEATURES), [10, 20, 30])
+    calls = session.model_calls()
+    assert [len(c["json"]["data"]) for c in calls] == [2, 1]
+    assert calls[0]["json"]["data"][1] == {"h_01": 0, "cdd": 1.5}
+
+
+@pytest.mark.parametrize(
+    ("body", "message"),
+    [
+        ({"result": [1.0]}, "expected 2 predictions"),
+        ({"result": 1.0}, "must be a list"),
+        ({"status": "ok"}, "no prediction field"),
+    ],
+)
+def test_batch_mode_rejects_mismatched_responses(body: Any, message: str) -> None:
+    session = FakeSession([_response(200, body)])
+    with pytest.raises(QuickMLError, match=message):
+        _client(session, batch_size=2).predict(FEATURES.iloc[:2])
+
+
+def test_batch_size_from_env() -> None:
+    env = {"QUICKML_ENDPOINT_URL": URL, "QUICKML_ENDPOINT_KEY": "k", "QUICKML_ACCESS_TOKEN": "t"}
+    assert QuickMLSettings.from_env(env).batch_size == 1
+    assert QuickMLSettings.from_env({**env, "QUICKML_BATCH_SIZE": "50"}).batch_size == 50
